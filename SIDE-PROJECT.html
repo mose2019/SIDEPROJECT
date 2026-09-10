@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Birthday,  Aran!</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background-color: #030305;
+            font-family: 'Courier New', Courier, monospace;
+            color: #ffffff;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* LIVE WALLPAPER TEASER LAYER */
+        #teaser-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            transition: opacity 1s ease;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        #teaser-video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.6; 
+            z-index: 1;
+        }
+
+        .teaser-content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+        }
+
+        .teaser-text {
+            font-size: 4rem;
+            text-transform: uppercase;
+            letter-spacing: 6px;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+            margin-bottom: 20px;
+        }
+
+        .click-hint {
+            font-size: 1rem;
+            letter-spacing: 4px;
+            color: #0e0d0d;
+            text-transform: uppercase;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        /* CINEMATIC VIDEO DISPLAY CANVAS */
+        .video-stage {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: none;
+            grid-template-columns: 1fr 1fr;
+            background-color: #050508;
+        }
+
+        .video-stage.active {
+            display: grid;
+        }
+
+        .text-panel {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 0 10%;
+            background: linear-gradient(90deg, #050508 80%, transparent);
+            z-index: 10;
+        }
+
+        .sub-caption {
+            font-size: 1.2rem;
+            color: #ff0055;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.5s ease;
+        }
+
+        .main-title {
+            font-size: 2.5rem;
+            line-height: 1.4;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 900;
+            border-right: 3px solid #ff0055;
+            white-space: normal;
+            word-break: break-word;
+            opacity: 0;
+        }
+
+        .active-slide .sub-caption {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .active-slide .main-title {
+            opacity: 1;
+            animation: typing 2s steps(40, end), blink-caret 0.75s step-end infinite;
+        }
+
+        @keyframes typing {
+            from { max-height: 0; opacity: 0; }
+            to { max-height: 500px; opacity: 1; }
+        }
+
+        @keyframes blink-caret {
+            from, to { border-color: transparent }
+            50% { border-color: #ff0055; }
+        }
+
+        .media-panel {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .slide-media {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transform: scale(1.1) rotate(1deg);
+            transition: opacity 0.8s ease, transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+            background-color: #050508;
+        }
+
+        .slide-media.visible {
+            opacity: 1;
+            transform: scale(1) rotate(0deg);
+        }
+
+        .slide-media img.full-panel-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* OVER THE YEARS INTR0 SLIDESHOW GRAPHICS */
+        .slide-media .gallery-img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            max-height: 100%;
+            max-width: 100%;
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+            z-index: 1;
+        }
+
+        .slide-media .gallery-img.active {
+            opacity: 1;
+            z-index: 2;
+        }
+
+        .climax-darken {
+            filter: contrast(1.4) brightness(0.6);
+        }
+
+        .mancity-center-wrapper {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .mancity-center-wrapper img {
+            max-width: 65%;
+            max-height: 65%;
+            object-fit: contain;
+            filter: drop-shadow(0px 10px 20px rgba(0,0,0,0.6));
+        }
+
+        .slide-media video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .video-clicker {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 50;
+            cursor: pointer;
+        }
+
+        .vignette {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            box-shadow: inset 0 0 100px rgba(0,0,0,0.8);
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        #final-birthday-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #000000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 1.5s ease-in-out;
+        }
+
+        #final-birthday-screen.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .birthday-title {
+            font-size: 5rem;
+            font-weight: 900;
+            letter-spacing: 8px;
+            text-transform: uppercase;
+            color: #ffffff;
+            text-shadow: 0 0 30px rgba(255, 0, 85, 0.6);
+            text-align: center;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- USING AN MP4 AS BACKGROUND AUDIO (HIDDEN VIDEO PLAYER) -->
+    <video id="bgMusic" loop preload="auto" style="display:none;">
+        <source src="Audio\joel sunny - luminary (official music video) - Joel Sunny (1080p, h264).mp3.mp4" type="video/mp4">
+    </video>
+
+    <!-- 1. STARTING INTRO TEASER WITH CLOUD LIVE WALLPAPER -->
+    <div id="teaser-screen" onclick="startVideoPlayback()">
+        <video id="teaser-video" autoplay loop muted playsinline>
+            <source src="Audio\orange-train-at-sunset.960x540.mp4" type="video/mp4">
+        </video>
+        <div class="teaser-content">
+            <h2 class="teaser-text">TO ARAN...</h2>
+            <span class="click-hint">CLICK TO PROCEED</span>
+        </div>
+    </div>
+
+    <!-- 2. "VIDEO" REPRODUCTION LAYER -->
+    <main class="video-stage" id="videoCanvas">
+        <div class="video-clicker" onclick="nextSlide()"></div>
+        <div class="vignette"></div>
+
+        <div class="text-panel" id="textDeck">
+            <div id="slideTextElement">
+                <h2 class="sub-caption" id="subCaptionTxt"></h2>
+                <h1 class="main-title" id="mainTitleTxt"></h1>
+            </div>
+        </div>
+
+        <div class="media-panel" id="mediaDeck">
+            <!-- Scene 0: Over the Years Interactive Background Slideshow -->
+            <div class="slide-media">
+                <img class="gallery-img active" src="Images\IMG_2050.JPG" alt="Legacy Photo 1">
+                <img class="gallery-img" src="Images\IMG_2063.JPG" alt="Legacy Photo 2">
+                <img class="gallery-img" src="Images\IMG_2082.JPG" alt="Legacy Photo 3">
+                <img class="gallery-img" src="Images\IMG_9669.JPG" alt="Legacy Photo 4">
+            </div>
+            <!-- Scene 1 -->
+            <div class="slide-media">
+                <video id="pesLocalVideo" loop muted playsinline>
+                    <source src="Audio\Pro Evolution Soccer 2017 - Opening Cinematic  1080p (60ᶠᵖˢ) HD ✔ - RajmanGaming HD (1080p, h264).mp4" type="video/mp4">
+                </video>
+            </div>
+            <!-- Scene 2 -->
+            <div class="slide-media">
+                <div class="mancity-center-wrapper">
+                    <img src="Images/IMG_2083.JPG"Man City Logo">
+                </div>
+            </div>
+            <!-- Scene 3 -->
+            <div class="slide-media">
+                <img class="full-panel-img" src="Images\IMG_1905.JPG" alt="GOAT Photo">
+            </div>
+            <!-- Scene 4 -->
+            <div class="slide-media">
+                <img class="full-panel-img climax-darken" src="Images\Nirvana.jpg" alt="Birthday Outro Photo">
+            </div>
+        </div>
+    </main>
+
+    <!-- 3. FINAL FULLSCREEN HAPPY BIRTHDAY OVERLAY LAYER -->
+    <div id="final-birthday-screen">
+        <h1 class="birthday-title">HAPPY BIRTHDAY</h1>
+    </div>
+
+    <!-- EXTERNAL CONFETTI ENGINE LIBRARY -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        const movieScript = [
+            { sub: "The Blueprint", main: "From the very beginning of camp, you've been with me, going on the most random adventures life had to offer ." },
+            { sub: "Where It All Began", main: "You were there when the first Abduno game was played. And from then, every game felt magical when you played with us." },
+            { sub: "A True Cityzen", main: "You painted my sky colourfully, making my day each time we talked, played or just had fun." },
+            { sub: "Watching Us Grow", main: "Through every single milestone, you were with me along the way." },
+            { sub: "The Undisputed MVP", main: "Happy Birthday, ARAN! Thank you for being the greatest bunkmate, tentmate, campmate and most importantly friend I could ask for." }
+        ];
+
+        let currentFrameIndex = 0;
+        let galleryIndex = 0;
+        let galleryInterval = null;
+
+        function startSlideshow() {
+            const galleryImages = document.querySelectorAll('.gallery-img');
+            if (galleryImages.length === 0 || galleryInterval !== null) return;
+            
+            galleryInterval = setInterval(() => {
+                galleryImages[galleryIndex].classList.remove('active');
+                galleryIndex = (galleryIndex + 1) % galleryImages.length;
+                galleryImages[galleryIndex].classList.add('active');
+            }, 4000); // Changes image every 4 seconds
+        }
+
+        function stopSlideshow() {
+            if (galleryInterval !== null) {
+                clearInterval(galleryInterval);
+                galleryInterval = null;
+            }
+        }
+
+        function startVideoPlayback() {
+            const music = document.getElementById('bgMusic');
+            const teaserVideo = document.getElementById('teaser-video');
+            
+            music.muted = false;
+            music.volume = 0.55;
+            
+            let playPromise = music.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(err => {
+                    console.log("Audio stream transmission error: ", err);
+                });
+            }
+            
+            const teaser = document.getElementById('teaser-screen');
+            teaser.style.opacity = '0';
+            
+            setTimeout(() => {
+                teaser.style.display = 'none';
+                teaserVideo.pause(); 
+                document.getElementById('videoCanvas').classList.add('active');
+                renderFrame(0);
+            }, 1000);
+        }
+
+        function renderFrame(index) {
+            const textContainer = document.getElementById('textDeck');
+            const localVid = document.getElementById('pesLocalVideo');
+            
+            textContainer.classList.remove('active-slide');
+            void textContainer.offsetWidth; 
+            
+            document.getElementById('subCaptionTxt').innerText = movieScript[index].sub;
+            document.getElementById('mainTitleTxt').innerText = movieScript[index].main;
+            
+            textContainer.classList.add('active-slide');
+
+            const mediaAssets = document.querySelectorAll('.slide-media');
+            mediaAssets.forEach((asset, itemIdx) => {
+                if(itemIdx === index) {
+                    asset.classList.add('visible');
+                } else {
+                    asset.classList.remove('visible');
+                }
+            });
+
+            // Handle slide-specific adjustments (start/stop background slideshow and local videos)
+            if (index === 0) {
+                startSlideshow();
+            } else {
+                stopSlideshow();
+            }
+
+            if (index === 1) {
+                localVid.currentTime = 0;
+                localVid.play().catch(err => console.log("Video playback error"));
+            } else {
+                localVid.pause();
+            }
+        }
+
+        function triggerConfettiBurst() {
+            const duration = 4 * 1000;
+            const animationEnd = Date.now() + duration;
+            const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 210 };
+
+            function randomInRange(min, max) {
+              return Math.random() * (max - min) + min;
+            }
+
+            const interval = setInterval(function() {
+              const timeLeft = animationEnd - Date.now();
+
+              if (timeLeft <= 0) {
+                return clearInterval(interval);
+              }
+
+              const particleCount = 50 * (timeLeft / duration);
+              confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+              confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+            }, 250);
+        }
+
+        function nextSlide() {
+            if (currentFrameIndex < movieScript.length - 1) {
+                currentFrameIndex++;
+                renderFrame(currentFrameIndex);
+            } else {
+                // Show final screen
+                const finalScreen = document.getElementById('final-birthday-screen');
+                finalScreen.classList.add('active');
+                triggerConfettiBurst();
+
+                // Setup click listener on final screen to loop back to start
+                finalScreen.onclick = function() {
+                    finalScreen.classList.remove('active');
+                    currentFrameIndex = 0; // Reset index counter
+                    
+                    // Reset the inner slideshow index and show first photo again
+                    const galleryImages = document.querySelectorAll('.gallery-img');
+                    galleryImages.forEach(img => img.classList.remove('active'));
+                    galleryIndex = 0;
+                    if(galleryImages[0]) galleryImages[0].classList.add('active');
+                    
+                    renderFrame(0);       // Rewind to intro photo slide
+                };
+            }
+        }
+    </script>    
+</body>
+</html>
